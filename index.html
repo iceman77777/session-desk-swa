@@ -1,0 +1,854 @@
+<title>Session Desk</title>
+<style>
+  :root {
+    /* Light palette — cool-green biased neutrals, petrol-teal accent */
+    --bg: #f3f6f5;
+    --surface: #ffffff;
+    --surface-2: #eaeeed;
+    --border: #d8e0dd;
+    --border-strong: #c3cec9;
+    --ink: #16211f;
+    --ink-soft: #475753;
+    --muted: #7a8a86;
+    --accent: #0e7c86;
+    --accent-strong: #0a5c64;
+    --accent-ink: #ffffff;
+    --accent-tint: #e0efef;
+    --vote: #c9761b;
+    --vote-tint: #f9ead4;
+    --success: #2f8f6b;
+    --success-tint: #dcefe6;
+    --danger: #bb4139;
+    --shadow: 0 1px 2px rgba(20,33,31,.05), 0 6px 20px rgba(20,33,31,.05);
+    --shadow-lift: 0 2px 6px rgba(20,33,31,.08), 0 14px 34px rgba(20,33,31,.09);
+    --radius: 14px;
+    --radius-sm: 9px;
+    --maxw: 1160px;
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #0e1413;
+      --surface: #161f1e;
+      --surface-2: #1e2a28;
+      --border: #2a3835;
+      --border-strong: #384a46;
+      --ink: #e7efec;
+      --ink-soft: #a8b8b3;
+      --muted: #7c8c88;
+      --accent: #38b4be;
+      --accent-strong: #5ac7d0;
+      --accent-ink: #05201f;
+      --accent-tint: #123637;
+      --vote: #eda84e;
+      --vote-tint: #362a17;
+      --success: #4cb98a;
+      --success-tint: #142d24;
+      --danger: #df7a71;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+      --shadow-lift: 0 2px 6px rgba(0,0,0,.4), 0 14px 34px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1413;
+    --surface: #161f1e;
+    --surface-2: #1e2a28;
+    --border: #2a3835;
+    --border-strong: #384a46;
+    --ink: #e7efec;
+    --ink-soft: #a8b8b3;
+    --muted: #7c8c88;
+    --accent: #38b4be;
+    --accent-strong: #5ac7d0;
+    --accent-ink: #05201f;
+    --accent-tint: #123637;
+    --vote: #eda84e;
+    --vote-tint: #362a17;
+    --success: #4cb98a;
+    --success-tint: #142d24;
+    --danger: #df7a71;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+    --shadow-lift: 0 2px 6px rgba(0,0,0,.4), 0 14px 34px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  a { color: var(--accent-strong); }
+  button { font-family: inherit; cursor: pointer; }
+  :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .head-inner { display: flex; align-items: center; gap: 14px; padding: 12px 20px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo { height: 42px; width: auto; display: block; }
+  .brand-divider { width: 1px; height: 26px; background: var(--border); flex: none; }
+  @media (max-width: 620px) { .brand-divider, .brand-txt { display: none; } }
+  .mark {
+    width: 34px; height: 38px; flex: none;
+    display: grid; place-items: center;
+    color: var(--accent);
+  }
+  .brand-txt strong { font-family: var(--font-display); font-size: 17px; font-weight: 800; letter-spacing: -0.02em; display: block; line-height: 1.1; }
+  .brand-txt span { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); }
+  .head-spacer { flex: 1; }
+
+  .session-select { display: inline-flex; align-items: center; gap: 9px; }
+  .session-select > span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); white-space: nowrap; }
+  .session-select select {
+    font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 12px; max-width: 300px; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .session-select select:hover { border-color: var(--border-strong); }
+  @media (max-width: 620px) { .session-select select { max-width: 190px; } }
+
+  .icon-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft);
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+    transition: border-color .15s, color .15s;
+  }
+  .icon-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+  .ghost-btn {
+    background: none; border: 1px solid var(--border); color: var(--ink-soft);
+    padding: 8px 13px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    transition: border-color .15s, color .15s;
+  }
+  .ghost-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+
+  /* Session banner */
+  .session { padding: 30px 0 22px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .18em; color: var(--accent); font-weight: 500; }
+  .session h1 { font-size: clamp(25px, 3.6vw, 38px); font-weight: 800; margin: 10px 0 13px; max-width: 24ch; line-height: 1.06; }
+  .session-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; color: var(--ink-soft); font-size: 13.5px; }
+  .session-meta b { color: var(--ink); font-weight: 600; }
+  .live-dot { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--success); font-weight: 500; }
+  .live-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 0 var(--success); animation: pulse 2.2s infinite; }
+  .up-chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border-strong); padding: 3px 9px; border-radius: 999px; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);} 70%{box-shadow:0 0 0 7px transparent;} 100%{box-shadow:0 0 0 0 transparent;} }
+  @media (prefers-reduced-motion: reduce) { .live-dot i { animation: none; } }
+
+  /* Layout */
+  .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 24px; align-items: start; padding-bottom: 60px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .panel-head h2 { font-size: 19px; }
+  .panel-head .sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: .04em; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+
+  /* Ask box */
+  .ask { padding: 16px; margin-bottom: 18px; }
+  .ask textarea {
+    width: 100%; resize: vertical; min-height: 74px;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 11px 13px; font-family: inherit; font-size: 15px; line-height: 1.5;
+    transition: border-color .15s;
+  }
+  .ask textarea:focus { outline: none; border-color: var(--accent); }
+  .ask-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+  .ask-row input[type=text] {
+    flex: 1; min-width: 0; background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-family: inherit; font-size: 14px; transition: border-color .15s;
+  }
+  .ask-row input:focus { outline: none; border-color: var(--accent); }
+  .counter { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .counter.warn { color: var(--danger); }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-ink); border: none;
+    padding: 10px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    transition: background .15s, transform .05s; white-space: nowrap;
+  }
+  .btn-primary:hover { background: var(--accent-strong); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .field-err { color: var(--danger); font-size: 12.5px; margin-top: 7px; min-height: 1px; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+  .seg button {
+    background: none; border: none; color: var(--ink-soft); font-size: 12.5px; font-weight: 500;
+    padding: 6px 13px; border-radius: 7px; transition: color .15s;
+  }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  .toolbar .spacer { flex: 1; }
+  .chk { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); cursor: pointer; user-select: none; }
+  .chk input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  /* Question list */
+  .qlist { display: flex; flex-direction: column; gap: 12px; }
+  .q {
+    display: grid; grid-template-columns: auto 1fr; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .q:hover { box-shadow: var(--shadow-lift); }
+  .q.answered { border-left: 3px solid var(--success); }
+  .vote {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--ink-soft);
+    border-radius: 10px; padding: 7px 11px; min-width: 52px; align-self: start;
+    transition: all .13s;
+  }
+  .vote:hover { border-color: var(--vote); color: var(--vote); }
+  .vote.on { background: var(--vote-tint); border-color: var(--vote); color: var(--vote); }
+  .vote .n { font-family: var(--font-mono); font-size: 16px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .vote svg { display: block; }
+  .q-body p { margin: 0 0 8px; line-height: 1.5; overflow-wrap: anywhere; }
+  .q.answered .q-body > p:first-child { color: var(--ink-soft); }
+  .q-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .q-meta .who { font-size: 12.5px; color: var(--muted); }
+  .q-meta .who b { color: var(--ink-soft); font-weight: 600; }
+  .badge {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px; font-weight: 500;
+    background: var(--success-tint); color: var(--success);
+  }
+  .linkbtn { background: none; border: none; color: var(--muted); font-size: 12px; padding: 2px 4px; text-decoration: underline; text-underline-offset: 2px; }
+  .linkbtn:hover { color: var(--accent-strong); }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px 20px; border: 1px dashed var(--border-strong); border-radius: var(--radius); }
+  .empty strong { display: block; color: var(--ink-soft); font-family: var(--font-display); font-size: 16px; margin-bottom: 4px; }
+
+  /* Feedback panel */
+  aside { position: sticky; top: 82px; }
+  @media (max-width: 860px) { aside { position: static; } }
+  .fb { padding: 18px; }
+  .fb .lead { color: var(--ink-soft); font-size: 13.5px; margin: 4px 0 16px; }
+  .fb-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); display: block; margin-bottom: 9px; }
+  .stars { display: flex; gap: 6px; margin-bottom: 4px; }
+  .star { background: none; border: none; padding: 2px; color: var(--border-strong); line-height: 0; transition: color .1s, transform .08s; }
+  .star:hover { transform: scale(1.12); }
+  .star.on { color: var(--vote); }
+  .star svg { width: 30px; height: 30px; }
+  .rating-hint { font-size: 12.5px; color: var(--muted); min-height: 18px; margin-bottom: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .tag {
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft);
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; transition: all .13s;
+  }
+  .tag:hover { border-color: var(--border-strong); }
+  .tag.on { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-strong); font-weight: 500; }
+  .fb textarea {
+    width: 100%; resize: vertical; min-height: 64px; background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px;
+    font-family: inherit; font-size: 14px; margin-bottom: 14px; transition: border-color .15s;
+  }
+  .fb textarea:focus { outline: none; border-color: var(--accent); }
+  .fb .btn-primary { width: 100%; padding: 12px; }
+
+  /* Feedback aggregate / thanks */
+  .thanks { text-align: center; padding: 6px 0 4px; }
+  .thanks .big { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .thanks p { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 18px; }
+  .agg { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .agg .score { font-family: var(--font-display); font-size: 40px; font-weight: 800; line-height: 1; }
+  .agg .out { color: var(--muted); font-family: var(--font-mono); font-size: 13px; }
+  .agg .cnt { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-align: right; }
+  .bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+  .bar-row { display: grid; grid-template-columns: 34px 1fr 30px; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .bar { height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--vote); border-radius: 999px; transition: width .4s ease; }
+  .tag-tally { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag-tally span { font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--ink-soft); padding: 4px 10px; border-radius: 999px; }
+  .tag-tally span b { color: var(--accent-strong); font-family: var(--font-mono); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 11px 20px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow-lift); opacity: 0;
+    pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .note { font-size: 12px; color: var(--muted); text-align: center; padding: 4px 0 30px; }
+  .note code { font-family: var(--font-mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+  /* Signed-in user area */
+  .user-area { display: inline-flex; align-items: center; gap: 10px; }
+  .user-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-soft); max-width: 220px;
+    padding: 7px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+  }
+  .user-chip b { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-chip .role { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); background: var(--accent-tint); padding: 2px 6px; border-radius: 999px; }
+  @media (max-width: 620px) { .user-chip { max-width: 120px; } .user-chip .role { display: none; } }
+
+  /* Login gate */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: grid; place-items: center; padding: 24px;
+    background: var(--bg);
+  }
+  .login-card {
+    width: 100%; max-width: 430px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; box-shadow: var(--shadow-lift); padding: 34px 30px;
+  }
+  .login-logo { height: 66px; width: auto; margin: 0 auto 18px; display: block; }
+  .login-card .eyebrow { display: block; margin-bottom: 10px; }
+  .login-card h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+  .login-card > p { color: var(--ink-soft); font-size: 14px; margin: 0 auto 22px; max-width: 34ch; }
+  .login-providers { display: flex; flex-direction: column; gap: 11px; }
+  .prov-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 11px;
+    padding: 13px 18px; border-radius: 11px; font-size: 14.5px; font-weight: 600;
+    text-decoration: none; border: 1px solid var(--border-strong); transition: transform .05s, border-color .15s, background .15s;
+  }
+  .prov-btn:active { transform: translateY(1px); }
+  .prov-ms { background: var(--surface); color: var(--ink); }
+  .prov-ms:hover { border-color: var(--accent); }
+  .prov-gh { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .prov-gh:hover { opacity: .92; }
+  .login-fine { font-size: 12px; color: var(--muted); margin-top: 18px; }
+
+  /* Loading skeleton */
+  .skel { pointer-events: none; }
+  .skel .line { height: 12px; border-radius: 6px; background: var(--surface-2); margin: 6px 0; overflow: hidden; position: relative; }
+  .skel .line.short { width: 45%; }
+  .skel .line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 7%, transparent), transparent); animation: shimmer 1.3s infinite; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .skel .line::after { animation: none; } }
+</style>
+
+<header>
+  <div class="head-inner">
+    <div class="brand">
+      <img id="brandLogo" class="brand-logo" alt="London AI" width="58" height="42">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-txt">
+        <strong>Q&amp;A &amp; Feedback</strong>
+        <span>Session Desk</span>
+      </span>
+    </div>
+    <div class="head-spacer"></div>
+    <label class="session-select">
+      <span>Session</span>
+      <select id="sessionSel" aria-label="Choose a session"></select>
+    </label>
+    <div class="user-area" id="userArea" hidden>
+      <span class="user-chip" id="userChip" title="Signed in"></span>
+      <a class="ghost-btn" id="signOut" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>
+    </div>
+    <button class="icon-btn" id="themeBtn" aria-label="Toggle light / dark theme" title="Toggle theme">
+      <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap session">
+    <span class="eyebrow" id="sEyebrow"></span>
+    <h1 id="sTitle"></h1>
+    <div class="session-meta" id="sMeta"></div>
+  </div>
+
+  <div class="wrap grid">
+    <!-- Q&A column -->
+    <section aria-labelledby="qa-h">
+      <div class="panel-head">
+        <h2 id="qa-h">Questions</h2>
+        <span class="sub" id="qCount">—</span>
+      </div>
+
+      <form class="card ask" id="askForm" novalidate>
+        <textarea id="qText" maxlength="280" placeholder="Ask the speaker a question…" aria-label="Your question"></textarea>
+        <div class="ask-row">
+          <input type="text" id="qName" maxlength="40" placeholder="Your name (optional)" aria-label="Your name, optional">
+          <span class="counter" id="qCounter">0 / 280</span>
+          <button type="submit" class="btn-primary">Post question</button>
+        </div>
+        <div class="field-err" id="qErr" role="alert"></div>
+      </form>
+
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Sort questions">
+          <button id="sortTop" aria-pressed="true">Top voted</button>
+          <button id="sortNew" aria-pressed="false">Newest</button>
+        </div>
+        <span class="spacer"></span>
+        <label class="chk"><input type="checkbox" id="hideAnswered"> Hide answered</label>
+      </div>
+
+      <div class="qlist" id="qList"></div>
+    </section>
+
+    <!-- Feedback column -->
+    <aside aria-labelledby="fb-h">
+      <div class="panel-head">
+        <h2 id="fb-h">Rate this session</h2>
+        <span class="sub" id="fbCount">—</span>
+      </div>
+      <div class="card fb" id="fbCard"><!-- rendered by JS --></div>
+      <p class="note">Questions, votes &amp; feedback are saved to the shared database and visible to <strong>everyone signed in</strong>. New activity from other people appears automatically every few seconds.</p>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Login gate -->
+<div class="login-overlay" id="loginOverlay" hidden>
+  <div class="login-card">
+    <img class="login-logo" id="loginLogo" alt="London AI" width="92" height="66">
+    <span class="eyebrow">The One that is built on Trust · 15 September 2026</span>
+    <h2>Sign in to join the Q&amp;A</h2>
+    <p>Questions, upvotes and session feedback are shared live with everyone in the room. Sign in to take part.</p>
+    <div class="login-providers">
+      <a class="prov-btn prov-ms" href="/.auth/login/aad?post_login_redirect_uri=/">
+        <svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        Continue with Microsoft
+      </a>
+      <a class="prov-btn prov-gh" href="/.auth/login/github?post_login_redirect_uri=/">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        Continue with GitHub
+      </a>
+    </div>
+    <p class="login-fine">You'll return here straight after signing in.</p>
+  </div>
+</div>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<script>
+(function () {
+  "use strict";
+
+  var API = "/api";
+  var THEME_KEY = "sd_theme_v2", CUR_KEY = "sd_current_v2";
+  var POLL_MS = 12000;
+
+  // ---------- sessions (the agenda is static; all live data comes from the API) ----------
+  var EYEBROW = "The One that is built on Trust · 15 September 2026";
+  var SESSIONS = [
+    { id: "keyboard", status: "live",
+      title: "From Keyboard to Thought: How AI Closes the Gap Between Intention and Action",
+      speaker: "Chukwunonso Ikemba", role: "",
+      when: "Tue 15 Sep 2026 · 18:00 BST", place: "Central London" },
+    { id: "attack", status: "upcoming",
+      title: "Everything Your AI Reads Is an Attack Surface",
+      speaker: "Luke Rogerson", role: "",
+      when: "Tue 15 Sep 2026 · 19:00 BST", place: "Central London" },
+    { id: "cascade", status: "upcoming",
+      title: "The Cascade Protocol: Governing Algorithmic Conflict Before the First Cascade Event",
+      speaker: "Joey Hernandez", role: "",
+      when: "Tue 15 Sep 2026 · 19:45 BST", place: "Central London" }
+  ];
+
+  // ---------- state ----------
+  var user = null, isOrganizer = false;
+  var current, sessionObj;
+  var questions = [], agg = null, myFb = null;
+  var sortMode = "top", hideAnswered = false, draft = { rating: 0, tags: {} };
+  var pollTimer = null;
+
+  // ---------- DOM refs ----------
+  var qList = document.getElementById("qList");
+  var qCount = document.getElementById("qCount");
+  var fbCard = document.getElementById("fbCard");
+  var fbCount = document.getElementById("fbCount");
+  var sel = document.getElementById("sessionSel");
+
+  // ---------- local (theme only) ----------
+  function load(k, f) { try { var v = localStorage.getItem(k); return v == null ? f : JSON.parse(v); } catch (e) { return f; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // ---------- utilities ----------
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" })[c]; }); }
+  function rel(ts) {
+    var d = Math.floor((Date.now() - ts) / 1000);
+    if (d < 45) return "just now";
+    if (d < 3600) return Math.floor(d/60) + "m ago";
+    if (d < 86400) return Math.floor(d/3600) + "h ago";
+    return Math.floor(d/86400) + "d ago";
+  }
+  var toastT;
+  function toast(msg, err) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.style.background = err ? "var(--danger)" : "var(--ink)";
+    t.style.color = err ? "#fff" : "var(--bg)";
+    t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  }
+  function toastErr(m) { toast(m, true); }
+
+  // ---------- API ----------
+  async function api(path, opts) {
+    var res = await fetch(API + path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+    if (res.status === 401) { showLogin(); throw new Error("unauth"); }
+    var data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((data && data.error) || ("Request failed (" + res.status + ")"));
+    return data;
+  }
+
+  // ---------- auth ----------
+  async function whoami() {
+    try {
+      var r = await fetch("/.auth/me");
+      var j = await r.json();
+      return (j && j.clientPrincipal) || null;
+    } catch (e) { return null; }
+  }
+  function showLogin() { document.getElementById("loginOverlay").hidden = false; if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  // ---------- session banner ----------
+  function renderSession() {
+    var s = sessionObj;
+    document.getElementById("sEyebrow").textContent = EYEBROW;
+    document.getElementById("sTitle").textContent = s.title;
+    var chip = s.status === "live"
+      ? '<span class="live-dot"><i></i> Live now</span>'
+      : '<span class="up-chip">Upcoming</span>';
+    document.getElementById("sMeta").innerHTML =
+      chip +
+      '<span><b>' + esc(s.speaker) + '</b>' + (s.role ? ' · ' + esc(s.role) : '') + '</span>' +
+      '<span>' + esc(s.when) + '</span>' +
+      '<span>' + esc(s.place) + '</span>';
+  }
+
+  // ---------- data ----------
+  function skeleton(n) {
+    var one = '<article class="q skel"><div style="width:52px"></div><div class="q-body"><div class="line"></div><div class="line short"></div></div></article>';
+    var out = ""; for (var i = 0; i < n; i++) out += one; return out;
+  }
+
+  async function refresh() {
+    if (!sessionObj) return;
+    try {
+      var results = await Promise.all([
+        api("/questions?sessionId=" + encodeURIComponent(current)),
+        api("/feedback?sessionId=" + encodeURIComponent(current))
+      ]);
+      questions = results[0] || [];
+      agg = results[1] || null;
+      myFb = (agg && agg.mine) ? agg.mine : null;
+      renderQuestions();
+      renderFeedback();
+    } catch (e) {
+      if (e.message !== "unauth") toastErr("Couldn't reach the server — retrying");
+    }
+  }
+
+  function loadSession(sid) {
+    sessionObj = SESSIONS.filter(function (s) { return s.id === sid; })[0] || SESSIONS[0];
+    current = sessionObj.id; save(CUR_KEY, current);
+    sortMode = "top"; hideAnswered = false;
+    document.getElementById("hideAnswered").checked = false; setSort();
+    sel.value = current;
+    renderSession();
+    qList.innerHTML = skeleton(3);
+    fbCard.innerHTML = '<p class="lead">Loading…</p>';
+    qCount.textContent = "…"; fbCount.textContent = "…";
+    refresh();
+  }
+
+  // ---------- questions ----------
+  var upSvg = '<svg width="15" height="14" viewBox="0 0 15 14" fill="none"><path d="M7.5 2.5 13 10H2z" fill="currentColor"/></svg>';
+
+  function renderQuestions() {
+    var list = questions.slice();
+    if (hideAnswered) list = list.filter(function (q) { return !q.answered; });
+    list.sort(function (a, b) {
+      if (sortMode === "top") return b.votes - a.votes || b.ts - a.ts;
+      return b.ts - a.ts;
+    });
+
+    var open = questions.filter(function (q) { return !q.answered; }).length;
+    qCount.textContent = questions.length + " total · " + open + " open";
+
+    if (!list.length) {
+      qList.innerHTML = '<div class="empty"><strong>' +
+        (questions.length ? "All questions answered 🎉" : "No questions yet") + '</strong>' +
+        (questions.length ? "Uncheck “Hide answered” to see them." : "Be the first to ask something above.") + '</div>';
+      return;
+    }
+
+    qList.innerHTML = list.map(function (q) {
+      var on = !!q.hasVoted;
+      return '<article class="q' + (q.answered ? ' answered' : '') + '" data-id="' + esc(q.id) + '">' +
+        '<button class="vote' + (on ? ' on' : '') + '" data-act="vote" aria-pressed="' + on + '" aria-label="Upvote — ' + q.votes + ' votes">' +
+          upSvg + '<span class="n">' + q.votes + '</span></button>' +
+        '<div class="q-body">' +
+          '<p>' + esc(q.text) + '</p>' +
+          '<div class="q-meta">' +
+            '<span class="who"><b>' + esc(q.name || "Anonymous") + '</b> · ' + rel(q.ts) + '</span>' +
+            (q.answered ? '<span class="badge">Answered</span>' : '') +
+            (isOrganizer ? '<button class="linkbtn" data-act="toggle">' + (q.answered ? "Mark unanswered" : "Mark answered") + '</button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join("");
+  }
+
+  qList.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    var art = e.target.closest(".q"); if (!art) return;
+    var id = art.getAttribute("data-id");
+    var q = questions.filter(function (x) { return x.id === id; })[0]; if (!q) return;
+    var act = btn.getAttribute("data-act");
+
+    if (act === "vote") {
+      // optimistic
+      q.hasVoted = !q.hasVoted; q.votes += q.hasVoted ? 1 : -1;
+      renderQuestions();
+      api("/questions/vote", { method: "POST", body: JSON.stringify({ id: id, sessionId: current }) })
+        .then(refresh).catch(function (err) { if (err.message !== "unauth") { toastErr("Vote didn't save"); refresh(); } });
+    } else if (act === "toggle") {
+      api("/questions/answer", { method: "POST", body: JSON.stringify({ id: id, sessionId: current }) })
+        .then(function (r) { toast(r.answered ? "Marked as answered" : "Reopened question"); return refresh(); })
+        .catch(function (err) { if (err.message !== "unauth") toastErr(err.message); });
+    }
+  });
+
+  // ---------- ask form ----------
+  var askForm = document.getElementById("askForm");
+  var qText = document.getElementById("qText");
+  var qName = document.getElementById("qName");
+  var qErr = document.getElementById("qErr");
+  var qCounter = document.getElementById("qCounter");
+
+  qText.addEventListener("input", function () {
+    var n = qText.value.length;
+    qCounter.textContent = n + " / 280";
+    qCounter.classList.toggle("warn", n > 260);
+    if (qErr.textContent && qText.value.trim()) qErr.textContent = "";
+  });
+
+  askForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var text = qText.value.trim();
+    if (text.length < 5) { qErr.textContent = "Please enter a question of at least 5 characters."; qText.focus(); return; }
+    var btn = askForm.querySelector("button[type=submit]");
+    btn.disabled = true;
+    api("/questions", { method: "POST", body: JSON.stringify({ sessionId: current, text: text, name: qName.value.trim() }) })
+      .then(function () {
+        qText.value = ""; qName.value = ""; qCounter.textContent = "0 / 280"; qCounter.classList.remove("warn"); qErr.textContent = "";
+        sortMode = "top"; setSort();
+        toast("Question posted");
+        return refresh();
+      })
+      .catch(function (err) { if (err.message !== "unauth") qErr.textContent = err.message; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  // ---------- sort + filter ----------
+  var sortTop = document.getElementById("sortTop"), sortNew = document.getElementById("sortNew");
+  function setSort() {
+    sortTop.setAttribute("aria-pressed", sortMode === "top");
+    sortNew.setAttribute("aria-pressed", sortMode === "new");
+  }
+  sortTop.addEventListener("click", function () { sortMode = "top"; setSort(); renderQuestions(); });
+  sortNew.addEventListener("click", function () { sortMode = "new"; setSort(); renderQuestions(); });
+  document.getElementById("hideAnswered").addEventListener("change", function (e) { hideAnswered = e.target.checked; renderQuestions(); });
+
+  // ---------- feedback ----------
+  var TAGS = ["Clear & well-paced", "Great examples", "Too fast", "Wanted more depth", "Very practical", "Slides hard to read"];
+  var starSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.98 6.2 21.07l1.1-6.47-4.7-4.58 6.5-.95z"/></svg>';
+
+  function renderFeedback() {
+    var count = agg ? agg.count : 0;
+    fbCount.textContent = count + (count === 1 ? " response" : " responses");
+
+    if (myFb) {
+      var avg = agg.average || 0;
+      var dist = agg.distribution || [0,0,0,0,0];
+      var tally = agg.tags || {};
+      var topTags = Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; }).slice(0, 5);
+      var max = Math.max.apply(null, dist.concat([1]));
+
+      fbCard.innerHTML =
+        '<div class="thanks">' +
+          '<div class="big">Thanks for the feedback 🙏</div>' +
+          '<p>Here\'s how the room is rating it so far.</p>' +
+        '</div>' +
+        '<div class="agg">' +
+          '<span class="score">' + avg.toFixed(1) + '</span><span class="out">/ 5</span>' +
+          '<span class="cnt">' + count + ' rating' + (count === 1 ? '' : 's') + '<br>you gave ' + myFb.rating + '★</span>' +
+        '</div>' +
+        '<div class="bars">' +
+          [5,4,3,2,1].map(function (n) {
+            var c = dist[n-1] || 0, pct = Math.round(c / max * 100);
+            return '<div class="bar-row"><span>' + n + '★</span><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + c + '</span></div>';
+          }).join("") +
+        '</div>' +
+        (topTags.length ? '<span class="fb-label">What people said</span><div class="tag-tally">' +
+          topTags.map(function (t) { return '<span>' + esc(t) + ' <b>' + tally[t] + '</b></span>'; }).join("") + '</div>' : '') +
+        '<button class="ghost-btn" id="editFb" style="width:100%;margin-top:16px">Edit my feedback</button>';
+
+      document.getElementById("editFb").addEventListener("click", function () {
+        draft = { rating: myFb.rating, tags: {} };
+        (myFb.tags || []).forEach(function (t) { draft.tags[t] = true; });
+        draft.comment = myFb.comment || "";
+        myFb = null;
+        renderFeedback();
+      });
+      return;
+    }
+
+    fbCard.innerHTML =
+      '<p class="lead">Two taps of feedback help the speaker improve — a rating is all that\'s required.</p>' +
+      '<span class="fb-label">Overall rating <span style="color:var(--danger)">*</span></span>' +
+      '<div class="stars" id="stars" role="radiogroup" aria-label="Rating out of 5">' +
+        [1,2,3,4,5].map(function (n) { return '<button type="button" class="star" data-n="' + n + '" role="radio" aria-checked="false" aria-label="' + n + ' star' + (n>1?'s':'') + '">' + starSvg + '</button>'; }).join("") +
+      '</div>' +
+      '<div class="rating-hint" id="ratingHint"></div>' +
+      '<span class="fb-label">Quick tags</span>' +
+      '<div class="tags" id="tags">' +
+        TAGS.map(function (t) { return '<button type="button" class="tag" data-t="' + esc(t) + '">' + esc(t) + '</button>'; }).join("") +
+      '</div>' +
+      '<span class="fb-label">Anything else? (optional)</span>' +
+      '<textarea id="fbComment" maxlength="400" placeholder="What worked, what you\'d change…">' + esc(draft.comment || "") + '</textarea>' +
+      '<button class="btn-primary" id="fbSubmit">Submit feedback</button>' +
+      '<div class="field-err" id="fbErr" role="alert" style="text-align:center;margin-top:8px"></div>';
+
+    var hints = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+    var starsEl = document.getElementById("stars");
+    var hint = document.getElementById("ratingHint");
+
+    function paintStars() {
+      Array.prototype.forEach.call(starsEl.children, function (b) {
+        var n = +b.getAttribute("data-n");
+        b.classList.toggle("on", n <= draft.rating);
+        b.setAttribute("aria-checked", n === draft.rating);
+      });
+      hint.textContent = draft.rating ? hints[draft.rating] : "";
+    }
+    starsEl.addEventListener("click", function (e) {
+      var b = e.target.closest(".star"); if (!b) return;
+      draft.rating = +b.getAttribute("data-n"); paintStars();
+      document.getElementById("fbErr").textContent = "";
+    });
+    starsEl.addEventListener("mouseover", function (e) {
+      var b = e.target.closest(".star"); if (!b) return;
+      var n = +b.getAttribute("data-n");
+      Array.prototype.forEach.call(starsEl.children, function (x) { x.classList.toggle("on", +x.getAttribute("data-n") <= n); });
+    });
+    starsEl.addEventListener("mouseleave", paintStars);
+    paintStars();
+
+    var tagsEl = document.getElementById("tags");
+    Array.prototype.forEach.call(tagsEl.children, function (b) {
+      if (draft.tags[b.getAttribute("data-t")]) b.classList.add("on");
+    });
+    tagsEl.addEventListener("click", function (e) {
+      var b = e.target.closest(".tag"); if (!b) return;
+      var t = b.getAttribute("data-t");
+      if (draft.tags[t]) { delete draft.tags[t]; b.classList.remove("on"); }
+      else { draft.tags[t] = true; b.classList.add("on"); }
+    });
+
+    document.getElementById("fbSubmit").addEventListener("click", function () {
+      if (!draft.rating) { document.getElementById("fbErr").textContent = "Please pick a star rating first."; return; }
+      var btn = document.getElementById("fbSubmit"); btn.disabled = true;
+      api("/feedback", { method: "POST", body: JSON.stringify({
+        sessionId: current, rating: draft.rating, tags: Object.keys(draft.tags),
+        comment: document.getElementById("fbComment").value.trim()
+      }) })
+        .then(function (res) { agg = res; myFb = res.mine; draft = { rating: 0, tags: {} }; renderFeedback(); toast("Feedback submitted"); })
+        .catch(function (err) { if (err.message !== "unauth") { document.getElementById("fbErr").textContent = err.message; btn.disabled = false; } });
+    });
+  }
+
+  // ---------- theme + logo ----------
+  var sun = '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>';
+  var moon = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.3 6.3 0 0 0 10.5 10.5z"/>';
+  var themeIcon = document.getElementById("themeIcon");
+  function currentDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function paintThemeIcon() { themeIcon.innerHTML = currentDark() ? sun : moon; }
+
+  var LOGO = { dark: "data:image/png;base64,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", light: "data:image/png;base64,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" };
+  var brandLogo = document.getElementById("brandLogo");
+  var loginLogo = document.getElementById("loginLogo");
+  function paintLogo() {
+    var src = currentDark() ? LOGO.dark : LOGO.light;
+    if (brandLogo) brandLogo.src = src;
+    if (loginLogo) loginLogo.src = src;
+  }
+
+  var savedTheme = load(THEME_KEY, null);
+  if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  paintThemeIcon(); paintLogo();
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var next = currentDark() ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    save(THEME_KEY, next); paintThemeIcon(); paintLogo();
+  });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onSys = function () { if (!document.documentElement.getAttribute("data-theme")) { paintThemeIcon(); paintLogo(); } };
+    if (mq.addEventListener) mq.addEventListener("change", onSys); else if (mq.addListener) mq.addListener(onSys);
+  }
+
+  // ---------- session selector ----------
+  SESSIONS.forEach(function (s) {
+    var o = document.createElement("option");
+    o.value = s.id; o.textContent = s.title;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", function () { loadSession(sel.value); });
+
+  // ---------- boot ----------
+  async function boot() {
+    user = await whoami();
+    if (!user) { showLogin(); return; }
+
+    document.getElementById("loginOverlay").hidden = true;
+    isOrganizer = Array.isArray(user.userRoles) && user.userRoles.indexOf("organizer") >= 0;
+
+    var name = user.userDetails || "Signed in";
+    document.getElementById("userChip").innerHTML =
+      '<b>' + esc(name) + '</b>' + (isOrganizer ? '<span class="role">Organizer</span>' : '');
+    document.getElementById("userArea").hidden = false;
+
+    var start = load(CUR_KEY, null);
+    if (!SESSIONS.some(function (s) { return s.id === start; })) start = SESSIONS[0].id;
+    loadSession(start);
+
+    // poll for other people's activity while the tab is visible
+    pollTimer = setInterval(function () {
+      if (document.visibilityState === "visible") refresh();
+    }, POLL_MS);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") refresh();
+    });
+  }
+
+  boot();
+})();
+</script>

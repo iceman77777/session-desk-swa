@@ -1,0 +1,42 @@
+# Azure Static Web Apps CI/CD.
+# When you create the Static Web App in the Azure portal and link this GitHub repo,
+# Azure commits a workflow like this for you and adds the AZURE_STATIC_WEB_APPS_API_TOKEN secret.
+# This template is here so the repo is complete if you deploy via the SWA CLI instead.
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+jobs:
+  build_and_deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Build And Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"        # app (index.html + staticwebapp.config.json) at repo root
+          api_location: "api"      # Azure Functions project
+          output_location: ""      # no build step; static files served as-is
+
+  close_pull_request:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request
+    steps:
+      - name: Close Pull Request
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: "close"
